@@ -8,7 +8,6 @@ TARGET_TRIPLET=arceb-ezchip-linux-uclibc
 echo "      Top: ${TOP}"
 echo "Toolchain: ${TOOLCHAIN_DIR}"
 echo "   Target: ${TARGET_TRIPLET}"
-echo ""
 
 BUILD_DIR=${TOP}/build
 BINUTILS_BUILD_DIR=${BUILD_DIR}/binutils
@@ -41,6 +40,11 @@ SCRIPT_START_TIME=`date -u +%s`
 
 LOGDIR=${TOP}/logs
 LOGFILE=${LOGDIR}/build-$(date -u +%F-%H%M).log
+
+echo " Log file: ${LOGFILE}"
+echo " Start at: "`date`
+echo ""
+
 rm -f ${LOGFILE}
 if ! mkdir -p ${LOGDIR}
 then
