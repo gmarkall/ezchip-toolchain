@@ -67,7 +67,14 @@ function msg ()
 
 function error ()
 {
+    SCRIPT_END_TIME=`date -u +%s`
+    TIME_STR=`times_to_time_string ${SCRIPT_START_TIME} ${SCRIPT_END_TIME}`
+
     echo "!! $1" | tee -a ${LOGFILE}
+    echo "All finished ${TIME_STR}." | tee -a ${LOGFILE}
+    echo ""
+    echo "See ${LOGFILE} for more details"
+
     exit 1
 }
 
