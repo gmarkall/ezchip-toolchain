@@ -62,12 +62,12 @@ fi
 
 function msg ()
 {
-    echo "$1" | tee ${LOGFILE}
+    echo "$1" | tee -a ${LOGFILE}
 }
 
 function error ()
 {
-    echo "!! $1" | tee ${LOGFILE}
+    echo "!! $1" | tee -a ${LOGFILE}
     exit 1
 }
 
@@ -502,4 +502,4 @@ job_done
 
 SCRIPT_END_TIME=`date -u +%s`
 TIME_STR=`times_to_time_string ${SCRIPT_START_TIME} ${SCRIPT_END_TIME}`
-echo "All finished ${TIME_STR}." | tee ${LOGFILE}
+echo "All finished ${TIME_STR}." | tee -a ${LOGFILE}
