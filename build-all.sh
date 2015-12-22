@@ -150,6 +150,23 @@ function mkdir_and_enter ()
     fi
 }
 
+function run_command ()
+{
+    echo "" >> ${LOGFILE}
+    echo "Current directory: ${PWD}" >> ${LOGFILE}
+    echo -n "Running: " >> ${LOGFILE}
+    for P in "$@"
+    do
+        V=`echo ${P} | sed -e 's/"/\\\\"/g'`
+        echo -n "\"${V}\" " >> ${LOGFILE}
+    done
+    echo "" >> ${LOGFILE}
+    echo "" >> ${LOGFILE}
+
+    "$@" >> ${LOGFILE} 2>&1
+    return $?
+}
+
 # ====================================================================
 #                   Build and install binutils
 # ====================================================================
@@ -158,7 +175,7 @@ job_start "Building binutils"
 
 mkdir_and_enter "${BINUTILS_BUILD_DIR}"
 
-if ! ${TOP}/binutils-nps/configure \
+if ! run_command ${TOP}/binutils-nps/configure \
          --prefix=${INSTALL_PREFIX_DIR} \
          --sysconfdir=${INSTALL_SYSCONF_DIR} \
          --localstatedir=${INSTALL_LOCALSTATE_DIR} \
@@ -181,17 +198,17 @@ if ! ${TOP}/binutils-nps/configure \
          --with-sysroot=${SYSROOT_DIR} \
          --enable-poison-system-directories \
          --disable-sim \
-         --disable-gdb >> ${LOGFILE} 2>&1
+         --disable-gdb
 then
     error "Failed to configure binutils"
 fi
 
-if ! make ${PARALLEL} >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL}
 then
     error "Failed to build binutils"
 fi
 
-if ! make ${PARALLEL} install >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} install
 then
     error "Failed to install binutils"
 fi
@@ -204,18 +221,23 @@ job_done
 
 job_start "Installing Linux header files"
 
-mkdir -p ${LINUX_BUILD_DIR} >> ${LOGFILE} 2>&1 \
-      || error "Failed to make linux build directory"
-cd ${TOP}/linux-nps >> ${LOGFILE} 2>&1 \
-    || error "Failed to entry linux source directory"
+if ! run_command mkdir -p ${LINUX_BUILD_DIR}
+then
+    error "Failed to make linux build directory"
+fi
+
+if ! run_command cd ${TOP}/linux-nps
+then
+    error "Failed to entry linux source directory"
+fi
 
 # The following will fail if linux has already been configured.
-if ! make ${PARALLEL} ARCH=arc defconfig O="${LINUX_BUILD_DIR}" >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} ARCH=arc defconfig O="${LINUX_BUILD_DIR}"
 then
     error "Failed to configure Linux headers directory"
 fi
 
-if ! make ${PARALLEL} ARCH=arc INSTALL_HDR_PATH="${SYSROOT_HEADER_DIR}" headers_install >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} ARCH=arc INSTALL_HDR_PATH="${SYSROOT_HEADER_DIR}" headers_install
 then
     error "Failed to install linux headers"
 fi
@@ -233,35 +255,35 @@ mkdir_and_enter "${UCLIBC_BUILD_DIR}"
 if [ ! -f Makefile.in ]
 then
     if ! tar -C "${TOP}"/uClibc-nps --exclude=.svn --exclude='*.o' \
-	 --exclude='*.a' -cf - . | tar -xf - >> ${LOGFILE} 2>&1
+	 --exclude='*.a' -cf - . | tar -xf -
     then
         error "Failed to copy uClibc sources across"
     fi
 
-    if ! cp ${TOOLCHAIN_DIR}/ezchip_nps_defconfig ${UCLIBC_BUILD_DIR}/extra/Configs/defconfigs/arc/ >> ${LOGFILE} 2>&1
+    if ! run_command cp ${TOOLCHAIN_DIR}/ezchip_nps_defconfig ${UCLIBC_BUILD_DIR}/extra/Configs/defconfigs/arc/
     then
         error "Failed to copy defconfig into uClibc directory"
     fi
 
     if ! sed -e "s#%KERNEL_HEADERS%#${SYSROOT_DIR}/usr/include#" \
              -e "s#%CROSS_COMPILER_PREFIX%#${INSTALL_PREFIX_DIR}/bin/${TARGET_TRIPLET}-#" \
-             -i ${UCLIBC_BUILD_DIR}/extra/Configs/defconfigs/arc/ezchip_nps_defconfig >> ${LOGFILE} 2>&1
+             -i ${UCLIBC_BUILD_DIR}/extra/Configs/defconfigs/arc/ezchip_nps_defconfig
     then
         error "Failed to patch uClibc defconfig using sed"
     fi
 fi
 
-if ! make distclean >> ${LOGFILE} 2>&1
+if ! run_command make distclean
 then
     error "Failed to distclean in uClibc directory"
 fi
 
-if ! make ARCH=arc ezchip_nps_defconfig >> ${LOGFILE} 2>&1
+if ! run_command make ARCH=arc ezchip_nps_defconfig
 then
     error "Failed to setup .config in uClibc directory"
 fi
 
-if ! make PREFIX="${SYSROOT_DIR}" install_headers >> ${LOGFILE} 2>&1
+if ! run_command make PREFIX="${SYSROOT_DIR}" install_headers
 then
     error "Failed to install uClibc header files"
 fi
@@ -276,53 +298,53 @@ job_start "Building stage 1 GCC"
 
 mkdir_and_enter ${GCC_STAGE_1_BUILD_DIR}
 
-if ! ${TOP}/gcc-nps/configure \
-         --prefix="${INSTALL_PREFIX_DIR}" \
-         --sysconfdir="${INSTALL_SYSCONF_DIR}" \
-         --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
-         --enable-shared \
-         --disable-static \
-         --disable-gtk-doc \
-         --disable-gtk-doc-html \
-         --disable-doc \
-         --disable-docs \
-         --disable-documentation \
-         --disable-debug \
-         --with-xmlto=no \
-         --with-fop=no \
-         --disable-dependency-tracking \
-         --target=${TARGET_TRIPLET} \
-         --with-sysroot=${SYSROOT_DIR} \
-         --disable-__cxa_atexit \
-         --with-gnu-ld \
-         --disable-libssp \
-         --disable-multilib \
-         --enable-target-optspace \
-         --disable-libsanitizer \
-         --disable-tls \
-         --disable-libmudflap \
-         --enable-threads \
-         --without-isl \
-         --without-cloog \
-         --disable-decimal-float \
-         --with-cpu=arc700 \
-         --enable-languages=c \
-         --disable-shared \
-         --without-headers \
-         --disable-threads \
-         --with-newlib \
-         --disable-largefile \
-         --disable-nls >> ${LOGFILE} 2>&1
+if ! run_command ${TOP}/gcc-nps/configure \
+               --prefix="${INSTALL_PREFIX_DIR}" \
+               --sysconfdir="${INSTALL_SYSCONF_DIR}" \
+               --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
+               --enable-shared \
+               --disable-static \
+               --disable-gtk-doc \
+               --disable-gtk-doc-html \
+               --disable-doc \
+               --disable-docs \
+               --disable-documentation \
+               --disable-debug \
+               --with-xmlto=no \
+               --with-fop=no \
+               --disable-dependency-tracking \
+               --target=${TARGET_TRIPLET} \
+               --with-sysroot=${SYSROOT_DIR} \
+               --disable-__cxa_atexit \
+               --with-gnu-ld \
+               --disable-libssp \
+               --disable-multilib \
+               --enable-target-optspace \
+               --disable-libsanitizer \
+               --disable-tls \
+               --disable-libmudflap \
+               --enable-threads \
+               --without-isl \
+               --without-cloog \
+               --disable-decimal-float \
+               --with-cpu=arc700 \
+               --enable-languages=c \
+               --disable-shared \
+               --without-headers \
+               --disable-threads \
+               --with-newlib \
+               --disable-largefile \
+               --disable-nls
 then
     error "Failed to configure GCC (stage 1)"
 fi
 
-if ! make ${PARALLEL} all-gcc all-target-libgcc >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} all-gcc all-target-libgcc
 then
     error "Failed to build GCC (stage 1)"
 fi
 
-if ! make ${PARALLEL} install-gcc install-target-libgcc >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} install-gcc install-target-libgcc
 then
     error "Failed to install GCC (stage 1)"
 fi
@@ -335,22 +357,22 @@ job_done
 
 job_start "Building full uClibc"
 
-if ! cd ${UCLIBC_BUILD_DIR} >> ${LOGFILE} 2>&1
+if ! run_command cd ${UCLIBC_BUILD_DIR}
 then
     error "Failed to entry build uClibc directory"
 fi
 
-if ! make clean >> ${LOGFILE} 2>&1
+if ! run_command make clean
 then
     error "Failed to clean uClibc build directory"
 fi
 
-if ! make ${PARALLEL} PREFIX="${SYSROOT_DIR}" >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} PREFIX="${SYSROOT_DIR}"
 then
     error "Failed to build uClibc"
 fi
 
-if ! make ${PARALLEL} PREFIX="${SYSROOT_DIR}" install >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} PREFIX="${SYSROOT_DIR}" install
 then
     error "Failed to install uClibc"
 fi
@@ -365,20 +387,20 @@ job_start "Building gmp package"
 
 mkdir_and_enter ${GMP_BUILD_DIR}
 
-if ! ${TOP}/gmp-6.0.0/configure --prefix="${INSTALL_PREFIX_DIR}" \
+if ! run_command ${TOP}/gmp-6.0.0/configure --prefix="${INSTALL_PREFIX_DIR}" \
          --sysconfdir="${INSTALL_SYSCONF_DIR}" \
          --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
-         --with-sysroot="${SYSROOT_DIR}" >> ${LOGFILE} 2>&1
+         --with-sysroot="${SYSROOT_DIR}"
 then
     error "Failed to configure gmp"
 fi
 
-if ! make ${PARALLEL} >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL}
 then
     error "Failed to build gmp"
 fi
 
-if ! make ${PARALLEL} install >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} install
 then
     error "Failed to install gmp"
 fi
@@ -393,20 +415,20 @@ job_start "Building mpc package"
 
 mkdir_and_enter ${MPC_BUILD_DIR}
 
-if ! ${TOP}/mpc-1.0.3/configure --prefix="${INSTALL_PREFIX_DIR}" \
+if ! run_command ${TOP}/mpc-1.0.3/configure --prefix="${INSTALL_PREFIX_DIR}" \
          --sysconfdir="${INSTALL_SYSCONF_DIR}" \
          --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
-         --with-sysroot="${SYSROOT_DIR}" >> ${LOGFILE} 2>&1
+         --with-sysroot="${SYSROOT_DIR}"
 then
     error "Failed to configure mpc"
 fi
 
-if ! make ${PARALLEL} >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL}
 then
     error "Failed to build mpc"
 fi
 
-if ! make ${PARALLEL} install >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} install
 then
     error "Failed to install mpc"
 fi
@@ -421,20 +443,20 @@ job_start "Building mpft package"
 
 mkdir_and_enter ${MPFR_BUILD_DIR}
 
-if ! ${TOP}/mpfr-3.1.2/configure --prefix="${INSTALL_PREFIX_DIR}" \
+if ! run_command ${TOP}/mpfr-3.1.2/configure --prefix="${INSTALL_PREFIX_DIR}" \
          --sysconfdir="${INSTALL_SYSCONF_DIR}" \
          --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
-         --with-sysroot="${SYSROOT_DIR}" >> ${LOGFILE} 2>&1
+         --with-sysroot="${SYSROOT_DIR}"
 then
     error "Failed to configure mpfr"
 fi
 
-if ! make ${PARALLEL} >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL}
 then
     error "Failed to build mpfr"
 fi
 
-if ! make ${PARALLEL} install >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} install
 then
     error "Failed to install mpfr"
 fi
@@ -449,7 +471,7 @@ job_start "Building stage 2 GCC"
 
 mkdir_and_enter ${GCC_STAGE_2_BUILD_DIR}
 
-if ! ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
+if ! run_command ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
       --sysconfdir="${INSTALL_SYSCONF_DIR}" \
       --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
       --enable-shared \
@@ -486,17 +508,17 @@ if ! ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
       --disable-nls \
       --with-gmp=${INSTALL_PREFIX_DIR} \
       --with-mpfr=${INSTALL_PREFIX_DIR} \
-      --with-mpc=${INSTALL_PREFIX_DIR} >> ${LOGFILE} 2>&1
+      --with-mpc=${INSTALL_PREFIX_DIR}
 then
     error "Failed to configure GCC (stage 2)"
 fi
 
-if ! make ${PARALLEL} all-gcc all-target-libgcc >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} all-gcc all-target-libgcc
 then
     error "Failed to build GCC (stage 2)"
 fi
 
-if ! make ${PARALLEL} install-gcc install-target-libgcc >> ${LOGFILE} 2>&1
+if ! run_command make ${PARALLEL} install-gcc install-target-libgcc
 then
     error "Failed to install GCC (stage 2)"
 fi
