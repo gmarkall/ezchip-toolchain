@@ -3,7 +3,7 @@
 TOOLCHAIN_DIR=$(cd "`dirname \"$0\"`"; pwd)
 TOP=$(cd ${TOOLCHAIN_DIR}/..; pwd)
 
-TARGET_TRIPLET=arceb-ezchip-linux-uclibc
+TARGET_TRIPLET=arceb-mellanox-linux-uclibc
 
 echo "      Top: ${TOP}"
 echo "Toolchain: ${TOOLCHAIN_DIR}"
