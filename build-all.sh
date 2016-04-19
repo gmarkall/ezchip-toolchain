@@ -5,11 +5,72 @@ TOP=$(cd ${TOOLCHAIN_DIR}/..; pwd)
 
 TARGET_TRIPLET=arceb-mellanox-linux-uclibc
 
-echo "      Top: ${TOP}"
-echo "Toolchain: ${TOOLCHAIN_DIR}"
-echo "   Target: ${TARGET_TRIPLET}"
+echo "        Top: ${TOP}"
+echo "  Toolchain: ${TOOLCHAIN_DIR}"
+echo "     Target: ${TARGET_TRIPLET}"
+
+# ====================================================================
 
 BUILD_DIR=${TOP}/build
+INSTALL_DIR=${TOP}/install
+JOBS=
+LOAD=
+
+# ====================================================================
+
+# Parse options
+until
+opt=$1
+case ${opt} in
+    --build-dir)
+	shift
+	BUILD_DIR=$(realpath -m $1)
+	;;
+
+    --install-dir)
+	shift
+	INSTALL_DIR=$(realpath -m $1)
+	;;
+
+    --jobs)
+	shift
+	JOBS=$1
+	;;
+
+    --load)
+	shift
+	LOAD=$1
+	;;
+
+    --single-thread)
+	JOBS=1
+	LOAD=1000
+	;;
+
+    ?*)
+	echo "Unknown argument $1"
+	echo
+	echo "Usage: ./build-all.sh [--build-dir <build_dir>]"
+        echo "                      [--install-dir <install_dir>]"
+	echo "                      [--jobs <count>] [--load <load>]"
+        echo "                      [--single-thread]"
+	exit 1
+	;;
+
+    *)
+	;;
+esac
+[ "x${opt}" = "x" ]
+do
+    shift
+done
+
+# ====================================================================
+
+echo "  Build Dir: ${BUILD_DIR}"
+echo "Install Dir: ${INSTALL_DIR}"
+
+
 BINUTILS_BUILD_DIR=${BUILD_DIR}/binutils
 GCC_STAGE_1_BUILD_DIR=${BUILD_DIR}/gcc-stage-1
 GCC_STAGE_2_BUILD_DIR=${BUILD_DIR}/gcc-stage-2
@@ -18,8 +79,6 @@ UCLIBC_BUILD_DIR=${BUILD_DIR}/uClibc
 GMP_BUILD_DIR=${BUILD_DIR}/gmp
 MPC_BUILD_DIR=${BUILD_DIR}/mpc
 MPFR_BUILD_DIR=${BUILD_DIR}/mpfr
-
-INSTALL_DIR=${TOP}/install
 
 INSTALL_PREFIX_DIR=${INSTALL_DIR}/usr
 INSTALL_SYSCONF_DIR=${INSTALL_DIR}/etc
@@ -31,7 +90,9 @@ SYSROOT_HEADER_DIR=${SYSROOT_DIR}/usr
 # Default parallellism
 processor_count="`(echo processor; cat /proc/cpuinfo 2>/dev/null echo processor) \
            | grep -c processor`"
-PARALLEL="-j ${processor_count} -l ${processor_count}"
+if [ -z "${JOBS}" ]; then JOBS=${processor_count}; fi
+if [ -z "${LOAD}" ]; then LOAD=${processor_count}; fi
+PARALLEL="-j ${JOBS} -l ${LOAD}"
 
 JOB_START_TIME=
 JOB_TITLE=
@@ -41,8 +102,8 @@ SCRIPT_START_TIME=`date -u +%s`
 LOGDIR=${TOP}/logs
 LOGFILE=${LOGDIR}/build-$(date -u +%F-%H%M).log
 
-echo " Log file: ${LOGFILE}"
-echo " Start at: "`date`
+echo "   Log file: ${LOGFILE}"
+echo "   Start at: "`date`
 echo ""
 
 rm -f ${LOGFILE}
