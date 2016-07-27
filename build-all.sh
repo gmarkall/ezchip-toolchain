@@ -4,6 +4,7 @@ TOOLCHAIN_DIR=$(cd "`dirname \"$0\"`"; pwd)
 TOP=$(cd ${TOOLCHAIN_DIR}/..; pwd)
 
 TARGET_TRIPLET=arceb-mellanox-linux-uclibc
+WITH_CPU=arc700
 
 echo "        Top: ${TOP}"
 echo "  Toolchain: ${TOOLCHAIN_DIR}"
@@ -259,7 +260,7 @@ if ! run_command ${TOP}/binutils-nps/configure \
          --sysconfdir=${INSTALL_SYSCONF_DIR} \
          --localstatedir=${INSTALL_LOCALSTATE_DIR} \
          --enable-shared \
-         --disable-static \
+         --enable-static \
          --disable-gtk-doc \
          --disable-gtk-doc-html \
          --disable-doc \
@@ -268,12 +269,9 @@ if ! run_command ${TOP}/binutils-nps/configure \
          --disable-debug \
          --with-xmlto=no \
          --with-fop=no \
-         --disable-dependency-tracking \
          --disable-multilib \
          --disable-werror \
          --target=${TARGET_TRIPLET} \
-         --disable-shared \
-         --enable-static \
          --with-sysroot=${SYSROOT_DIR} \
          --enable-poison-system-directories \
          --disable-sim \
@@ -386,7 +384,7 @@ if ! run_command ${TOP}/gcc-nps/configure \
                --prefix="${INSTALL_PREFIX_DIR}" \
                --sysconfdir="${INSTALL_SYSCONF_DIR}" \
                --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
-               --enable-shared \
+               --disable-shared \
                --disable-static \
                --disable-gtk-doc \
                --disable-gtk-doc-html \
@@ -396,7 +394,6 @@ if ! run_command ${TOP}/gcc-nps/configure \
                --disable-debug \
                --with-xmlto=no \
                --with-fop=no \
-               --disable-dependency-tracking \
                --target=${TARGET_TRIPLET} \
                --with-sysroot=${SYSROOT_DIR} \
                --disable-__cxa_atexit \
@@ -407,15 +404,13 @@ if ! run_command ${TOP}/gcc-nps/configure \
                --disable-libsanitizer \
                --disable-tls \
                --disable-libmudflap \
-               --enable-threads \
+               --disable-threads \
                --without-isl \
                --without-cloog \
                --disable-decimal-float \
-               --with-cpu=arc700 \
+               --with-cpu=${WITH_CPU} \
                --enable-languages=c \
-               --disable-shared \
                --without-headers \
-               --disable-threads \
                --with-newlib \
                --disable-largefile \
                --disable-nls
@@ -559,40 +554,28 @@ if ! run_command ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
       --sysconfdir="${INSTALL_SYSCONF_DIR}" \
       --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
       --enable-shared \
-      --disable-static \
-      --disable-gtk-doc \
-      --disable-gtk-doc-html \
-      --disable-doc \
-      --disable-docs \
-      --disable-documentation \
-      --disable-debug \
-      --with-xmlto=no \
-      --with-fop=no \
-      --disable-dependency-tracking \
-      --target=${TARGET_TRIPLET} \
-      --with-sysroot=${SYSROOT_DIR} \
+      --enable-static \
       --disable-__cxa_atexit \
       --with-gnu-ld \
       --disable-libssp \
-      --disable-multilib \
       --enable-target-optspace \
       --disable-libsanitizer \
       --disable-tls \
       --disable-libmudflap \
       --enable-threads \
-      --without-isl \
-      --without-cloog \
-      --disable-decimal-float \
-      --with-cpu=arc700 \
-      --enable-languages=c \
-      --disable-shared \
-      --disable-threads \
-      --with-newlib \
-      --disable-largefile \
-      --disable-nls \
+      --disable-multilib \
+      --target=${TARGET_TRIPLET} \
+      --with-cpu=${WITH_CPU} \
+      --with-sysroot=${SYSROOT_DIR} \
       --with-gmp=${INSTALL_PREFIX_DIR} \
       --with-mpfr=${INSTALL_PREFIX_DIR} \
-      --with-mpc=${INSTALL_PREFIX_DIR}
+      --with-mpc=${INSTALL_PREFIX_DIR} \
+      --without-cloog \
+      --disable-decimal-float \
+      --enable-languages=c \
+      --without-isl \
+      --disable-libgomp \
+      --with-build-time-tools=${INSTALL_PREFIX_DIR}/${TARGET_TRIPLET}/bin
 then
     error "Failed to configure GCC (stage 2)"
 fi
