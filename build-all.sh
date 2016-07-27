@@ -11,6 +11,7 @@ echo "     Target: ${TARGET_TRIPLET}"
 
 # ====================================================================
 
+CLEAN_BUILD=no
 BUILD_DIR=${TOP}/build
 INSTALL_DIR=${TOP}/install
 JOBS=
@@ -47,6 +48,10 @@ case ${opt} in
 	LOAD=1000
 	;;
 
+    --clean)
+        CLEAN_BUILD=yes
+	;;
+
     ?*)
 	echo "Unknown argument $1"
 	echo
@@ -54,6 +59,7 @@ case ${opt} in
         echo "                      [--install-dir <install_dir>]"
 	echo "                      [--jobs <count>] [--load <load>]"
         echo "                      [--single-thread]"
+        echo "                      [--clean]"
 	exit 1
 	;;
 
@@ -70,6 +76,18 @@ done
 echo "  Build Dir: ${BUILD_DIR}"
 echo "Install Dir: ${INSTALL_DIR}"
 
+if [ "x${CLEAN_BUILD}" = "xyes" ]
+then
+    for T in `seq 5 -1 1`
+    do
+        echo -ne "\rClean Build: yes (in ${T} seconds)"
+        sleep 1
+    done
+    echo -e "\rClean Build: yes                           "
+    rm -fr ${BUILD_DIR} ${INSTALL_DIR}
+else
+    echo "Clean Build: no"
+fi
 
 BINUTILS_BUILD_DIR=${BUILD_DIR}/binutils
 GCC_STAGE_1_BUILD_DIR=${BUILD_DIR}/gcc-stage-1
