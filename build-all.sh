@@ -350,6 +350,11 @@ then
     then
         error "Failed to patch uClibc defconfig using sed"
     fi
+
+    if ! patch -p1 < ${TOOLCHAIN_DIR}/uclibc.patch
+    then
+        error "Failed to patch uClibc source tree"
+    fi
 fi
 
 if ! run_command make distclean

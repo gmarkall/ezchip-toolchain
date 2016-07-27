@@ -1,0 +1,39 @@
+diff -upr uClibc-nps/ldso/ldso/arc/dl-startup.h uClibc-nps-patched/ldso/ldso/arc/dl-startup.h
+--- uClibc-nps/ldso/ldso/arc/dl-startup.h	2015-11-03 22:33:21.000000000 +0000
++++ uClibc-nps-patched/ldso/ldso/arc/dl-startup.h	2016-04-19 14:08:48.658135937 +0100
+@@ -39,9 +39,9 @@ __asm__(
+ 
+     "   add     r2, pcl, _dl_fini@pcl       ; finalizer         \n"
+ #else
+-    "   add     r12, pcl, _dl_skip_args-.+(.&2)                 \n"
++    "   add     r12, pcl, _dl_skip_args@pcl                 \n"
+     "   ld      r12, [r12]                                      \n"
+-    "   add     r2, pcl, _dl_fini-.+(.&2)   ; finalizer         \n"
++    "   add     r2, pcl, _dl_fini@pcl   ; finalizer         \n"
+ #endif
+ 
+     "   add2    sp, sp, r12    ; discard argv entries from stack\n"
+diff -upr uClibc-nps/ldso/ldso/arc/dl-sysdep.h uClibc-nps-patched/ldso/ldso/arc/dl-sysdep.h
+--- uClibc-nps/ldso/ldso/arc/dl-sysdep.h	2015-11-03 22:33:21.000000000 +0000
++++ uClibc-nps-patched/ldso/ldso/arc/dl-sysdep.h	2016-04-19 14:08:34.042197281 +0100
+@@ -160,7 +160,7 @@ static __always_inline Elf32_Addr elf_ma
+ 	Elf32_Addr addr, tmp;
+ 	__asm__ (
+         "ld  %1, [pcl, _dl_start@gotpc] ;build addr of _dl_start   \n"
+-        "add %0, pcl, _dl_start-.+(.&2) ;runtime addr of _dl_start \n"
++        "add %0, pcl, _dl_start@pcl ;runtime addr of _dl_start \n"
+         "sub %0, %0, %1                 ;delta                     \n"
+          : "=&r" (addr), "=r"(tmp)
+      );
+diff -upr uClibc-nps/Rules.mak uClibc-nps-patched/Rules.mak
+--- uClibc-nps/Rules.mak	2015-11-03 22:33:21.000000000 +0000
++++ uClibc-nps-patched/Rules.mak	2016-06-15 16:56:26.438412678 +0100
+@@ -545,7 +545,7 @@ endif
+ 
+ ifeq ($(TARGET_ARCH),arc)
+ 	CPU_CFLAGS-y += -mlock -mswape
+-	CPU_CFLAGS-$(CONFIG_ARC_CPU_700) += -mA7
++	CPU_CFLAGS-$(CONFIG_ARC_CPU_700) += -mcpu=NPS400
+ 	CPU_CFLAGS-$(CONFIG_ARC_CPU_HS) += -mcpu=archs
+ 	CPU_LDFLAGS-y += $(CPU_CFLAGS) -marclinux
+ endif
