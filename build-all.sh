@@ -562,7 +562,7 @@ if ! run_command ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
       --disable-libsanitizer \
       --disable-tls \
       --disable-libmudflap \
-      --enable-threads \
+      --disable-threads \
       --disable-multilib \
       --target=${TARGET_TRIPLET} \
       --with-cpu=${WITH_CPU} \
