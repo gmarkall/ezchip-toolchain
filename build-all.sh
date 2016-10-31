@@ -12,6 +12,7 @@ echo "     Target: ${TARGET_TRIPLET}"
 
 # ====================================================================
 
+SKIP_GCC_STAGE_1=no
 CLEAN_BUILD=no
 BUILD_DIR=${TOP}/build
 INSTALL_DIR=${TOP}/install
@@ -53,6 +54,10 @@ case ${opt} in
         CLEAN_BUILD=yes
 	;;
 
+    --skip-gcc-stage-1)
+        SKIP_GCC_STAGE_1=yes
+        ;;
+
     ?*)
 	echo "Unknown argument $1"
 	echo
@@ -61,6 +66,7 @@ case ${opt} in
 	echo "                      [--jobs <count>] [--load <load>]"
         echo "                      [--single-thread]"
         echo "                      [--clean]"
+        echo "                      [--skip-gcc-stage-1]"
 	exit 1
 	;;
 
@@ -93,6 +99,7 @@ fi
 BINUTILS_BUILD_DIR=${BUILD_DIR}/binutils
 GCC_STAGE_1_BUILD_DIR=${BUILD_DIR}/gcc-stage-1
 GCC_STAGE_2_BUILD_DIR=${BUILD_DIR}/gcc-stage-2
+GCC_STAGE_3_BUILD_DIR=${BUILD_DIR}/gcc-stage-3
 LINUX_BUILD_DIR=${BUILD_DIR}/linux
 UCLIBC_BUILD_DIR=${BUILD_DIR}/uClibc
 GMP_BUILD_DIR=${BUILD_DIR}/gmp
@@ -293,6 +300,69 @@ fi
 job_done
 
 # ====================================================================
+#                Build and Install GCC (Stage 1)
+# ====================================================================
+
+if [ "x${SKIP_GCC_STAGE_1}" = "xno" ]
+then
+    job_start "Building stage 1 GCC"
+
+    mkdir_and_enter ${GCC_STAGE_1_BUILD_DIR}
+
+    if ! run_command ${TOP}/gcc-nps/configure \
+               --prefix="${INSTALL_PREFIX_DIR}" \
+               --sysconfdir="${INSTALL_SYSCONF_DIR}" \
+               --localstatedir="${INSTALL_LOCALSTATE_DIR}" \
+               --disable-shared \
+               --disable-static \
+               --disable-gtk-doc \
+               --disable-gtk-doc-html \
+               --disable-doc \
+               --disable-docs \
+               --disable-documentation \
+               --disable-debug \
+               --with-xmlto=no \
+               --with-fop=no \
+               --target=${TARGET_TRIPLET} \
+               --with-sysroot=${SYSROOT_DIR} \
+               --disable-__cxa_atexit \
+               --with-gnu-ld \
+               --disable-libssp \
+               --disable-multilib \
+               --enable-target-optspace \
+               --disable-libsanitizer \
+               --disable-tls \
+               --disable-libmudflap \
+               --disable-threads \
+               --without-isl \
+               --without-cloog \
+               --disable-decimal-float \
+               --with-cpu=${WITH_CPU} \
+               --enable-languages=c \
+               --without-headers \
+               --with-newlib \
+               --disable-largefile \
+               --disable-nls
+    then
+        error "Failed to configure GCC (stage 1)"
+    fi
+
+    if ! run_command make ${PARALLEL} all-gcc
+    then
+        error "Failed to build GCC (stage 1)"
+    fi
+
+    if ! run_command make ${PARALLEL} install-gcc
+    then
+        error "Failed to install GCC (stage 1)"
+    fi
+else
+    job_start "Skipping stage 1 GCC"
+fi
+
+job_done
+
+# ====================================================================
 #                      Install Linux headers
 # ====================================================================
 
@@ -373,12 +443,12 @@ fi
 job_done
 
 # ====================================================================
-#                Build and Install GCC (Stage 1)
+#                Build and Install GCC (Stage 2)
 # ====================================================================
 
-job_start "Building stage 1 GCC"
+job_start "Building stage 2 GCC"
 
-mkdir_and_enter ${GCC_STAGE_1_BUILD_DIR}
+mkdir_and_enter ${GCC_STAGE_2_BUILD_DIR}
 
 if ! run_command ${TOP}/gcc-nps/configure \
                --prefix="${INSTALL_PREFIX_DIR}" \
@@ -415,17 +485,17 @@ if ! run_command ${TOP}/gcc-nps/configure \
                --disable-largefile \
                --disable-nls
 then
-    error "Failed to configure GCC (stage 1)"
+    error "Failed to configure GCC (stage 2)"
 fi
 
 if ! run_command make ${PARALLEL} all-gcc all-target-libgcc
 then
-    error "Failed to build GCC (stage 1)"
+    error "Failed to build GCC (stage 2)"
 fi
 
 if ! run_command make ${PARALLEL} install-gcc install-target-libgcc
 then
-    error "Failed to install GCC (stage 1)"
+    error "Failed to install GCC (stage 2)"
 fi
 
 job_done
@@ -543,12 +613,12 @@ fi
 job_done
 
 # ====================================================================
-#                Build and Install GCC (stage 2)
+#                Build and Install GCC (stage 3)
 # ====================================================================
 
-job_start "Building stage 2 GCC"
+job_start "Building stage 3 GCC"
 
-mkdir_and_enter ${GCC_STAGE_2_BUILD_DIR}
+mkdir_and_enter ${GCC_STAGE_3_BUILD_DIR}
 
 if ! run_command ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
       --sysconfdir="${INSTALL_SYSCONF_DIR}" \
@@ -577,17 +647,17 @@ if ! run_command ${TOP}/gcc-nps/configure --prefix="${INSTALL_PREFIX_DIR}" \
       --disable-libgomp \
       --with-build-time-tools=${INSTALL_PREFIX_DIR}/${TARGET_TRIPLET}/bin
 then
-    error "Failed to configure GCC (stage 2)"
+    error "Failed to configure GCC (stage 3)"
 fi
 
 if ! run_command make ${PARALLEL} all-gcc all-target-libgcc
 then
-    error "Failed to build GCC (stage 2)"
+    error "Failed to build GCC (stage 3)"
 fi
 
 if ! run_command make ${PARALLEL} install-gcc install-target-libgcc
 then
-    error "Failed to install GCC (stage 2)"
+    error "Failed to install GCC (stage 3)"
 fi
 
 job_done
