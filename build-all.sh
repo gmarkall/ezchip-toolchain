@@ -368,15 +368,25 @@ job_done
 
 job_start "Installing Linux header files"
 
-if ! run_command mkdir -p ${LINUX_BUILD_DIR}
+mkdir_and_enter "${LINUX_BUILD_DIR}"
+
+if ! tar -C "${TOP}"/linux-nps --exclude=.git --exclude='*.o' \
+     --exclude='*.a' -cf - . | tar -xf -
 then
-    error "Failed to make linux build directory"
+    error "Failed to copy Linux sources across"
 fi
 
-if ! run_command cd ${TOP}/linux-nps
+if ! patch -p1 < ${TOOLCHAIN_DIR}/linux.patch
 then
-    error "Failed to entry linux source directory"
+    error "Failed to patch Linux source tree"
 fi
+
+# The path to the toolchain must be exported for it to be picked up by
+# gcc-version.sh from the Linux build system (called by its Makefile)
+# for some reason
+OLDPATH=${PATH}
+LINUX_MAKE_PATH=${INSTALL_PREFIX_DIR}/bin:${PATH}
+export PATH=${LINUX_MAKE_PATH}
 
 # The following will fail if linux has already been configured.
 if ! run_command make ${PARALLEL} ARCH=arc defconfig O="${LINUX_BUILD_DIR}"
@@ -388,6 +398,9 @@ if ! run_command make ${PARALLEL} ARCH=arc INSTALL_HDR_PATH="${SYSROOT_HEADER_DI
 then
     error "Failed to install linux headers"
 fi
+
+# Remove the toolchain that we temporarily added to the path.
+export PATH=${OLDPATH}
 
 job_done
 

@@ -1,0 +1,30 @@
+diff -r -u -x .git linux-nps/arch/arc/configs/nps_defconfig linux-nps-patched/arch/arc/configs/nps_defconfig
+--- linux-nps/arch/arc/configs/nps_defconfig	2015-11-03 22:33:16.000000000 +0000
++++ linux-nps-patched/arch/arc/configs/nps_defconfig	2016-10-31 12:20:54.970656744 +0000
+@@ -1,4 +1,4 @@
+-CONFIG_CROSS_COMPILE="arceb-linux-"
++CONFIG_CROSS_COMPILE="arceb-mellanox-linux-uclibc-"
+ # CONFIG_LOCALVERSION_AUTO is not set
+ # CONFIG_SWAP is not set
+ CONFIG_SYSVIPC=y
+diff -r -u -x .git linux-nps/arch/arc/configs/nsim_700_defconfig linux-nps-patched/arch/arc/configs/nsim_700_defconfig
+--- linux-nps/arch/arc/configs/nsim_700_defconfig	2015-11-03 22:33:16.000000000 +0000
++++ linux-nps-patched/arch/arc/configs/nsim_700_defconfig	2016-10-31 12:20:54.970656744 +0000
+@@ -1,4 +1,4 @@
+-CONFIG_CROSS_COMPILE="arc-linux-uclibc-"
++CONFIG_CROSS_COMPILE="arceb-mellanox-linux-uclibc-"
+ # CONFIG_LOCALVERSION_AUTO is not set
+ CONFIG_DEFAULT_HOSTNAME="ARCLinux"
+ # CONFIG_SWAP is not set
+diff -r -u -x .git linux-nps/arch/arc/Makefile linux-nps-patched/arch/arc/Makefile
+--- linux-nps/arch/arc/Makefile	2015-11-03 22:33:16.000000000 +0000
++++ linux-nps-patched/arch/arc/Makefile	2016-10-31 12:20:54.969656744 +0000
+@@ -9,7 +9,7 @@
+ UTS_MACHINE := arc
+ 
+ ifeq ($(CROSS_COMPILE),)
+-CROSS_COMPILE := arc-linux-uclibc-
++CROSS_COMPILE := arceb-mellanox-linux-uclibc-
+ endif
+ 
+ KBUILD_DEFCONFIG := nsim_700_defconfig
